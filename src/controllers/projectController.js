@@ -1,9 +1,9 @@
 
-class projectController{
-
+class ProjectController{
     async verify(req, res){
         res.send({ok: true})
     }
 }
 
-module.exports = projectController
+module.exports = ProjectController
+
