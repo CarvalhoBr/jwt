@@ -1,12 +1,9 @@
-const express = require('express')
-const authMiddleware = require('../middlewares/auth')
 
-const router = express.Router()
+class projectController{
 
-router.use(authMiddleware)
+    async verify(req, res){
+        res.send({ok: true})
+    }
+}
 
-router.get('/', (req, res) => {
-    res.send({ok: true})
-})
-
-module.exports = app => app.use('/projects', router)
+module.exports = projectController

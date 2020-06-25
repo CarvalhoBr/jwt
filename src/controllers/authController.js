@@ -1,13 +1,8 @@
-const express = require('express')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-
 const authConfig = require('../config/auth.json')
 
 const User = require('../models/user')
-
-const router = express.Router()
-
 
 function generateToken(params = {}){
     return jwt.sign(params, authConfig.secret, {
@@ -15,45 +10,48 @@ function generateToken(params = {}){
     } )
 }
 
-router.post('/register', async(req, res) => {
+class AuthController{
+
+    async create(req, res){
+
+        const {email} = req.body
     
-    const {email} = req.body
-    
-    try {
+        try {
         
-        if( await User.findOne({ email })){
-            return res.status(400).send({error: 'User already exists'})
+            if( await User.findOne({ email })){
+                return res.status(400).send({error: 'User already exists'})
+            }
+
+            const user = await User.create(req.body)
+            user.password = undefined
+
+            const token = generateToken({id: user.id})
+
+            return res.send({user, token})
+
+        } catch (error) {
+            return res.status(400).send({error: error.stack})
         }
 
-        const user = await User.create(req.body)
-        user.password = undefined
-
-        const token = generateToken({id: user.id})
-
-        return res.send({user, token})
-
-    } catch (error) {
-        res.status(400).send({error: error.stack})
     }
 
-})
+    async authenticate(req, res){
+        const {email, password} = req.body
 
-router.post('/authenticate', async (req, res) => {
-    const {email, password} = req.body
+        const user = await User.findOne({email}).select('+password')
 
-    const user = await User.findOne({email}).select('+password')
+        if(!user)
+            return res.status(400).send({error: 'User not found'})
 
-    if(!user)
-        return res.status(400).send({error: 'User not found'})
+        if (!(await bcrypt.compare(password, user.password)))
+            return res.status(400).send({error: 'Invalid password'})
 
-    if (!(await bcrypt.compare(password, user.password)))
-        return res.status(400).send({error: 'Invalid password'})
+        user.password = undefined
 
-    user.password = undefined
+        const token = generateToken({ id: user.id })
+        
+        res.send({user, token})
+    }
+}
 
-    const token = generateToken({ id: user.id })
-       
-    res.send({user, token})
-})
-
-module.exports = app => app.use('/auth', router)
+module.exports = AuthController
