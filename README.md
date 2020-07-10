@@ -71,7 +71,7 @@ This route is used to authenticate an already created user
 
 ---
 
-`http://localhost:3000/projects`
+`GET http://localhost:3000/projects`
 
 This is the route that your application will run.
 Anything that passes through this route will require an authorization token to pass the request to the desired endpoint
